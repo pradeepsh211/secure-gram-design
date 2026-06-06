@@ -52,12 +52,15 @@ function Auctions() {
       .order("closes_at", { ascending: true });
     if (error) { toast.error(error.message); setLoading(false); return; }
     setAuctions((data as AuctionRow[]) || []);
-    // bid counts
+    // bid counts via safe aggregate view
     const ids = (data || []).map((a: any) => a.id);
     if (ids.length) {
-      const { data: bidRows } = await supabase.from("bids").select("auction_id").in("auction_id", ids);
+      const { data: countRows } = await supabase
+        .from("auction_bid_counts" as any)
+        .select("auction_id,bid_count")
+        .in("auction_id", ids);
       const counts: Record<string, number> = {};
-      (bidRows || []).forEach((b: any) => { counts[b.auction_id] = (counts[b.auction_id] || 0) + 1; });
+      (countRows || []).forEach((b: any) => { counts[b.auction_id] = b.bid_count; });
       setBidCounts(counts);
     }
     setLoading(false);
