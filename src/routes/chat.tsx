@@ -54,9 +54,9 @@ function Inbox({ me }: { me: string }) {
     });
     const ids = Array.from(seen.keys());
 
-    // also include other profiles so user can start a chat
+    // also include other profiles so user can start a chat (safe public view, no phone)
     const { data: allProfiles } = await supabase
-      .from("profiles").select("id,name,avatar_url").neq("id", me).limit(20);
+      .from("public_profiles" as any).select("id,name,avatar_url").neq("id", me).limit(20);
 
     const merged = new Map<string, Contact & { last: string; when: string }>();
     (allProfiles || []).forEach((p: any) => merged.set(p.id, { ...p, last: "Start a conversation", when: "" }));
@@ -112,8 +112,8 @@ function Thread({ me, other }: { me: string; other: string }) {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    supabase.from("profiles").select("id,name,avatar_url").eq("id", other).maybeSingle()
-      .then(({ data }) => setContact(data as Contact | null));
+    supabase.from("public_profiles" as any).select("id,name,avatar_url").eq("id", other).maybeSingle()
+      .then(({ data }) => setContact(data as unknown as Contact | null));
 
     supabase.from("chat_messages")
       .select("*")
